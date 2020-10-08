@@ -85,6 +85,7 @@ void loop()
     fix = gps.read();
     if (
       fix.valid.location &&
+      fix.valid.speed &&
       (fix.speed_kph() > GPS_MIN_SPEED_kph)
     )
     {
@@ -320,6 +321,6 @@ void saveTrip()
 
 void saveOdo()
 {
-  odo_old_m = odo_m;
   fram.writeUINT32T(FRAM_ID_ODO, odo_m);
+  odo_old_m = odo_m;
 }
