@@ -38,10 +38,10 @@ Adafruit_ST7735               tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
 NMEAGPS gps;
 gps_fix fix;
-uint16_t                      distance_buf_m = 0;
-uint32_t                      odometer_km = 127000;
+uint32_t                      odo_m = 127000000;
+uint32_t                      odo_old_m = odo_m;
 uint32_t                      trip_m = 0;
-uint32_t                      trip_old_m = 0;
+uint32_t                      trip_old_m = trip_m;
 NeoGPS::Location_t            last_loc;
 bool                          last_loc_okay = false;
 
@@ -83,32 +83,18 @@ void loop()
   if (gps.available(serial))
   {
     fix = gps.read();
-    //if (fix.valid.location && (fix.speed_kph() > GPS_MIN_SPEED_kph))
-    if (fix.valid.location)
+    if (
+      fix.valid.location &&
+      (fix.speed_kph() > GPS_MIN_SPEED_kph)
+    )
     {
       if (last_loc_okay)
       {
-        float distance_m = fix.location.DistanceKm(last_loc)*1000000;
-        distance_buf_m += distance_m;
+        float distance_m = fix.location.DistanceKm(last_loc)*1000;
         trip_m += distance_m;
-        if ((distance_buf_m >= 500) ||
-          (time_to_save_trip)
-        )
-        {
-          //fram.writeUINT32T(FRAM_ID_TRIP, trip_m);
-          time_to_save_trip = false;
-          trip_old_m = trip_m;
-          count_s = 0;
-        }
-
-        if (distance_buf_m >= 1000)
-        {
-          odometer_km += distance_buf_m/1000;
-          distance_buf_m = distance_buf_m % 1;
-          //fram.writeUINT32T(FRAM_ID_ODO, odometer_km);
-        }
+        odo_m += distance_m;
       }
-      last_loc   = fix.location;
+      last_loc = fix.location;
       last_loc_okay = true;
     }
     printDisplay();
@@ -116,6 +102,7 @@ void loop()
 
   handleTripReset();
   handleStaticTripSaveTime();
+  handleSave();
 }
 
 void printDisplay()
@@ -139,7 +126,7 @@ void printDisplay()
   tft.setTextColor(BLUE, BLACK);
   tft.println("ODO");
   tft.setTextColor(convertRGB(255,128,0), BLACK);
-  printInt(odometer_km, true, 9);
+  printInt((odo_m/1000), true, 9);
   tft.println("km");
 
   tft.setTextColor(BLUE, BLACK);
@@ -149,12 +136,11 @@ void printDisplay()
   tft.println("km");
   tft.println("");
   
-  tft.setTextSize(2);
+  tft.setTextSize(3);
   tft.setTextColor(convertRGB(255,128,0), BLACK);
   printInt(fix.speed_kph(), fix.valid.speed, 4);
   tft.println("km/h");
   tft.setTextSize(1);
-  
 }
 
 static void printFloat(float val, bool valid, int len, int prec)
@@ -256,9 +242,10 @@ void initFram()
     fram.clearAll();
   }
 
-  if (fram.readUINT32T(FRAM_ID_ODO) > odometer_km)
+  if (fram.readUINT32T(FRAM_ID_ODO) > odo_m)
   {
-    odometer_km = fram.readUINT32T(FRAM_ID_ODO);
+    odo_m = fram.readUINT32T(FRAM_ID_ODO);
+    odo_old_m = odo_m;
   }
   if (fram.readUINT32T(FRAM_ID_TRIP) > trip_m)
   {
@@ -275,8 +262,7 @@ void handleTripReset()
     if (btn_press_duration_ms > BTN_PRESS_TIME_ms)
     {
       trip_m = 0;
-      trip_old_m = trip_m;
-      fram.writeUINT32T(FRAM_ID_TRIP, trip_m);
+      saveTrip();
     }
   }
   else
@@ -298,13 +284,42 @@ void handleStaticTripSaveTime()
   }
 
   if (
-    count_s >= MINUTES(TRIP_SAVE_TIME_m) &&
+    (count_s >= MINUTES(TRIP_SAVE_TIME_m)) &&
     !time_to_save_trip &&
-    (trip_old_m != trip_m) &&
-    ((trip_m - trip_old_m) > 100)
+    ((trip_m - trip_old_m) >= 100)
   )
   {
     time_to_save_trip = true;
   }
     
+}
+
+void handleSave()
+{
+  if (
+    time_to_save_trip ||
+    ((trip_m - trip_old_m) >= 500)
+  )
+  {
+    saveTrip();
+  }
+
+  if (odo_m - odo_old_m >= 1000)
+  {
+    saveOdo();
+  }
+}
+
+void saveTrip()
+{
+  fram.writeUINT32T(FRAM_ID_TRIP, trip_m);
+  time_to_save_trip = false;
+  trip_old_m = trip_m;
+  count_s = 0;
+}
+
+void saveOdo()
+{
+  odo_old_m = odo_m;
+  fram.writeUINT32T(FRAM_ID_ODO, odo_m);
 }

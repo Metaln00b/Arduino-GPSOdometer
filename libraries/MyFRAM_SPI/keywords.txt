@@ -1,0 +1,64 @@
+#######################################
+# Syntax Coloring Map For MyFRAM_SPI
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+MyFRAM_SPI	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+init	KEYWORD2
+setSize	KEYWORD2
+setWriteEnableBit	KEYWORD2
+getWriteEnableBit	KEYWORD2
+writeByte	KEYWORD2
+writeBuffer	KEYWORD2
+verifyBuffer	KEYWORD2
+setStartAddress32Bit	KEYWORD2
+writeLong	KEYWORD2
+writeUINT32T	KEYWORD2
+writeDouble	KEYWORD2
+writeFloat	KEYWORD2
+readByte	KEYWORD2
+readBuffer	KEYWORD2
+readLong	KEYWORD2
+readUINT32T	KEYWORD2
+readFloat	KEYWORD2
+readDouble	KEYWORD2
+clearByte	KEYWORD2
+clearAll	KEYWORD2
+clear	KEYWORD2
+
+#######################################
+# Global Variable (KEYWORD2)
+#######################################
+
+framSize	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+FRAM_OPCODE_WREN	LITERAL1
+FRAM_OPCODE_WRDI	LITERAL1
+FRAM_OPCODE_RDSR	LITERAL1
+FRAM_OPCODE_WRSR	LITERAL1
+FRAM_OPCODE_READ	LITERAL1
+FRAM_OPCODE_WRITE	LITERAL1
+FRAM_OPCODE_RDID	LITERAL1
+SPI_CLOCK	LITERAL1
+SPI_MODE	LITERAL1
+SPI_BITORDER	LITERAL1
+FRAM_OVERRUN	LITERAL1
+FRAM_NO_OVERRUN	LITERAL1
